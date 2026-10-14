@@ -22,14 +22,15 @@
 <body>
     <div class="container">
         <h1>🌾 Agri Image Dataset Hub</h1>
-        <p class="subtitle">(Images Stored Direct-to-Database)</p>
+        <p class="subtitle">(Batch Folder / Multiple Image Upload to DB)</p>
         
         <!-- Upload Form -->
         <div class="upload-card">
-            <h3>Upload Dataset Image</h3>
+            <h3>Upload Dataset Folder or Multiple Images</h3>
             <form action="/upload" method="post" enctype="multipart/form-data">
-                <input type="file" name="file" accept="image/*" required><br>
-                <button type="submit">Upload to Database</button>
+                <!-- multiple and webkitdirectory attributes moolama folder / multiple files pick panna mudiyum -->
+                <input type="file" name="file" accept="image/*" multiple webkitdirectory required><br>
+                <button type="submit">Upload All Images to Database</button>
             </form>
         </div>
 
@@ -38,7 +39,6 @@
         <div class="gallery">
             {% for img in images %}
                 <div class="card">
-                    <!-- Database Base64 Data Render -->
                     <img src="data:image/jpeg;base64,{{ img.data }}" alt="Dataset Image">
                     <p>{{ img.filename }}</p>
                 </div>
