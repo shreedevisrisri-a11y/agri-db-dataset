@@ -5,13 +5,11 @@ from flask import Flask, render_template, request, redirect, url_for
 
 app = Flask(__name__)
 
-# SQLite Database setup
 DB_NAME = 'dataset.db'
 
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    # Image content-ஐ Base64 Text-ஆக Database-ல் சேமிக்கும் Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS images (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,7 +20,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Server ஆரம்பிக்கும் போது Database Table தயாராகும்
 init_db()
 
 @app.route('/')
@@ -33,22 +30,24 @@ def index():
     rows = cursor.fetchall()
     conn.close()
     
-    # Database-ல் உள்ள Base64 படங்களை எடுக்கிறது
     images = [{'filename': row[0], 'data': row[1]} for row in rows]
     return render_template('index.html', images=images)
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    file = request.files.get('file')
-    if file and file.filename != '':
-        filename = file.filename
-        # படத்தை Base64 Text-ஆக மாற்றுகிறது
-        encoded_string = base64.b64encode(file.read()).decode('utf-8')
-        
-        # Local Folder-ல் சேமிக்காமல் நேரடி Database Insert
+    # oru file-ku bathila multiple files-a getlist() moolama edukkirom
+    files = request.files.getlist('file')
+    
+    if files:
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
-        cursor.execute('INSERT INTO images (filename, image_data) VALUES (?, ?)', (filename, encoded_string))
+        
+        for file in files:
+            if file and file.filename != '':
+                filename = file.filename
+                encoded_string = base64.b64encode(file.read()).decode('utf-8')
+                cursor.execute('INSERT INTO images (filename, image_data) VALUES (?, ?)', (filename, encoded_string))
+        
         conn.commit()
         conn.close()
         
