@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agri Image Dataset Hub (Database Stored)</title>
+    <title>Agri Image Dataset Hub (Unlimited Cloud Storage)</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
         .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
@@ -26,7 +26,7 @@
 <body>
     <div class="container">
         <h1>🌾 Agri Image Dataset Hub</h1>
-        <p class="subtitle">(Single Image or Whole Folder Upload to DB)</p>
+        <p class="subtitle">(Cloud Hosted Images + SQLite URL Storage)</p>
         
         <div class="upload-section">
             <!-- Option 1: Single or Multiple Images -->
@@ -53,7 +53,8 @@
         <div class="gallery">
             {% for img in images %}
                 <div class="card">
-                    <img src="data:image/jpeg;base64,{{ img.data }}" alt="Dataset Image">
+                    <!-- Cloudinary URL Rendering -->
+                    <img src="{{ img.url }}" alt="Dataset Image">
                     <p>{{ img.filename }}</p>
                 </div>
             {% else %}
