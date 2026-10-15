@@ -1,19 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ta">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agri Dataset Repository (Kaggle Style)</title>
+    <title>Agri Dataset Repository (Public View)</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 25px; }
-        h1 { color: #1e293b; margin: 0; }
-        .btn-admin { background: #0f172a; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; }
+        h1 { color: #0f172a; margin: 0; }
+        .btn-admin { background: #0284c7; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; }
+        .btn-admin:hover { background: #0369a1; }
         
         .search-box { display: flex; gap: 10px; margin-bottom: 30px; }
         .search-box input { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 15px; }
-        .search-box button { background: #0284c7; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .search-box button { background: #0f172a; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; }
 
         .dataset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
         .card { border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between; }
@@ -29,19 +30,19 @@
     <div class="container">
         <div class="header">
             <div>
-                <h1>🌱 Agri Dataset Repository</h1>
-                <span style="color: #64748b; font-size: 14px;">Kaggle-Style Open Data Hub for Agricultural Images</span>
+                <h1>🌾 Agri Dataset Repository</h1>
+                <span style="color: #64748b; font-size: 14px;">Kaggle-Style Open Data Hub for Agricultural Datasets</span>
             </div>
             {% if session.get('is_admin') %}
-                <a href="/admin" class="btn-admin">⚙️ Admin Dashboard</a>
+                <a href="/admin" class="btn-admin">⚙️ Go to Admin Webpage</a>
             {% else %}
-                <a href="/login" class="btn-admin">🔐 Admin Login</a>
+                <a href="/login" class="btn-admin">🔐 Admin Portal Login</a>
             {% endif %}
         </div>
 
         <!-- Search Bar -->
         <form action="/" method="get" class="search-box">
-            <input type="text" name="search" value="{{ search }}" placeholder="Search datasets (e.g., Tomato Leaf, Chilli)...">
+            <input type="text" name="search" value="{{ search }}" placeholder="Search dataset category (e.g., Tomato, Chilli)...">
             <button type="submit">Search</button>
             {% if search %}
                 <a href="/" style="padding: 12px; background: #94a3b8; color: white; border-radius: 6px; text-decoration: none;">Clear</a>
@@ -61,11 +62,11 @@
                         </div>
                     </div>
                     <div style="padding: 0 15px 15px 15px;">
-                        <a href="/download/{{ ds.name }}" class="btn-download">⬇️ Download Zip</a>
+                        <a href="/download/{{ ds.name }}" class="btn-download">⬇️ Download Zip Dataset</a>
                     </div>
                 </div>
             {% else %}
-                <p style="grid-column: 1/-1; text-align: center; color: #888;">No datasets found.</p>
+                <p style="grid-column: 1/-1; text-align: center; color: #888;">No datasets available yet.</p>
             {% endfor %}
         </div>
     </div>
