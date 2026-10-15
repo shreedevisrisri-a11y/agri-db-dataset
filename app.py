@@ -6,11 +6,11 @@ from flask import Flask, redirect, render_template, request, url_for
 
 app = Flask(__name__)
 
-# Cloudinary Details (Unga Account Details-a inga kudunga)
+# Unga Cloudinary Account Credentials
 cloudinary.config(
-    cloud_name='YOUR_CLOUD_NAME',
-    api_key='YOUR_API_KEY',
-    api_secret='YOUR_API_SECRET',
+    cloud_name='xczmz3xg',
+    api_key='252792712175493',
+    api_secret='PbtB4lLkKg_jGq0xaQhCd8LI6fY',
 )
 
 DB_NAME = 'dataset.db'
@@ -19,7 +19,7 @@ DB_NAME = 'dataset.db'
 def init_db():
   conn = sqlite3.connect(DB_NAME)
   cursor = conn.cursor()
-  # Direct image_data-ku badhula image_url store pannuvom
+  # Database-ல direct Base64-க்கு பதிலா Image Cloud URL-அ சேமிக்கிறோம்
   cursor.execute('''
         CREATE TABLE IF NOT EXISTS images (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,11 +57,11 @@ def upload_file():
     for file in files:
       if file and file.filename != '':
         filename = file.filename
-        # Image-a Direct-a Cloudinary-ku Upload panrom
+        # 1. Image-அ Cloudinary Cloud Storage-க்கு Upload பண்றோம்
         upload_result = cloudinary.uploader.upload(file)
         image_url = upload_result['secure_url']
 
-        # Database-la Kevalam Image Link (URL)-a mattum Insert panrom
+        # 2. Database-ல Kevalam அந்த Image URL-அ மட்டும் சேமிக்கிறோம்
         cursor.execute(
             'INSERT INTO images (filename, image_url) VALUES (?, ?)',
             (filename, image_url),
