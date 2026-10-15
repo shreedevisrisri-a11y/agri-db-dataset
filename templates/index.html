@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agri Dataset Repository (Public View)</title>
+    <title>Agri Dataset Repository</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; }
         .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 25px; }
+        .header { border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 25px; text-align: center; }
         h1 { color: #0f172a; margin: 0; }
-        .btn-admin { background: #0284c7; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; }
-        .btn-admin:hover { background: #0369a1; }
         
         .search-box { display: flex; gap: 10px; margin-bottom: 30px; }
         .search-box input { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 15px; }
@@ -29,15 +27,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <div>
-                <h1>🌾 Agri Dataset Repository</h1>
-                <span style="color: #64748b; font-size: 14px;">Kaggle-Style Open Data Hub for Agricultural Datasets</span>
-            </div>
-            {% if session.get('is_admin') %}
-                <a href="/admin" class="btn-admin">⚙️ Go to Admin Webpage</a>
-            {% else %}
-                <a href="/login" class="btn-admin">🔐 Admin Portal Login</a>
-            {% endif %}
+            <h1>🌾 Agri Dataset Repository</h1>
+            <span style="color: #64748b; font-size: 14px;">Kaggle-Style Open Data Hub for Agricultural Datasets</span>
         </div>
 
         <!-- Search Bar -->
