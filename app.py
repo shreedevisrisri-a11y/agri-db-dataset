@@ -7,16 +7,23 @@ import cloudinary
 import cloudinary.uploader
 from flask import (
     Flask,
+    flash,
     jsonify,
     redirect,
     render_template,
     request,
     send_file,
+    session,
     url_for,
 )
 import requests
 
 app = Flask(__name__)
+app.secret_key = 'agri_admin_secret_key_2026'
+
+# Admin Credentials
+ADMIN_USERNAME = 'admin'
+ADMIN_PASSWORD = 'admin123'  # மேம் இதைப் பயன்படுத்தி Login செய்யலாம்
 
 # Cloudinary Credentials
 cloudinary.config(
@@ -54,6 +61,9 @@ def init_db():
 init_db()
 
 
+# --- PUBLIC ROUTES ---
+
+
 @app.route('/')
 def index():
   search_query = request.args.get('search', '').strip()
@@ -88,8 +98,99 @@ def index():
   return render_template('index.html', datasets=datasets, search=search_query)
 
 
+@app.route('/download/<dataset_name>')
+def download_dataset(dataset_name):
+  conn = sqlite3.connect(DB_NAME)
+  cursor = conn.cursor()
+  cursor.execute(
+      'SELECT filename, image_url FROM dataset_images WHERE dataset_name = ?',
+      (dataset_name,),
+  )
+  rows = cursor.fetchall()
+  conn.close()
+
+  if not rows:
+    return 'Dataset not found', 404
+
+  zip_buffer = io.BytesIO()
+
+  def fetch_and_zip(row):
+    filename, url = row
+    try:
+      resp = requests.get(url, timeout=10)
+      if resp.status_code == 200:
+        return (filename, resp.content)
+    except Exception as e:
+      print(f'Error fetching {url}: {e}')
+    return None
+
+  with ThreadPoolExecutor(max_workers=10) as executor:
+    results = list(executor.map(fetch_and_zip, rows))
+
+  with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+    for res in results:
+      if res:
+        filename, content = res
+        zip_file.writestr(filename, content)
+
+  zip_buffer.seek(0)
+  return send_file(
+      zip_buffer,
+      mimetype='application/zip',
+      as_attachment=True,
+      download_name=f'{dataset_name}.zip',
+  )
+
+
+# --- ADMIN AUTHENTICATION & CONTROL ROUTES ---
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+  if request.method == 'POST':
+    username = request.form.get('username')
+    password = request.form.get('password')
+
+    if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+      session['is_admin'] = True
+      return redirect(url_for('admin_dashboard'))
+    else:
+      flash('Invalid Username or Password!', 'danger')
+
+  return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+  session.pop('is_admin', None)
+  return redirect(url_for('index'))
+
+
+@app.route('/admin')
+def admin_dashboard():
+  if not session.get('is_admin'):
+    return redirect(url_for('login'))
+
+  conn = sqlite3.connect(DB_NAME)
+  cursor = conn.cursor()
+  cursor.execute(
+      'SELECT id, dataset_name, filename, image_url FROM dataset_images ORDER'
+      ' BY id DESC'
+  )
+  rows = cursor.fetchall()
+  conn.close()
+
+  db_records = [
+      {'id': r[0], 'dataset': r[1], 'filename': r[2], 'url': r[3]} for r in rows
+  ]
+  return render_template('admin.html', db_records=db_records)
+
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
+  if not session.get('is_admin'):
+    return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
   dataset_name = request.form.get('dataset_name', '').strip()
   files = request.files.getlist('file')
 
@@ -124,51 +225,6 @@ def upload_file():
   conn.close()
 
   return jsonify({'success': True, 'count': uploaded_count})
-
-
-@app.route('/download/<dataset_name>')
-def download_dataset(dataset_name):
-  conn = sqlite3.connect(DB_NAME)
-  cursor = conn.cursor()
-  cursor.execute(
-      'SELECT filename, image_url FROM dataset_images WHERE dataset_name = ?',
-      (dataset_name,),
-  )
-  rows = cursor.fetchall()
-  conn.close()
-
-  if not rows:
-    return 'Dataset not found', 404
-
-  # Memory-ல் Zip File உருவாக்கி அனைத்து படங்களையும் டவுன்லோட் செய்து சேர்க்கிறோம்
-  zip_buffer = io.BytesIO()
-
-  def fetch_and_zip(row):
-    filename, url = row
-    try:
-      resp = requests.get(url, timeout=10)
-      if resp.status_code == 200:
-        return (filename, resp.content)
-    except Exception as e:
-      print(f'Error fetching {url}: {e}')
-    return None
-
-  with ThreadPoolExecutor(max_workers=10) as executor:
-    results = list(executor.map(fetch_and_zip, rows))
-
-  with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-    for res in results:
-      if res:
-        filename, content = res
-        zip_file.writestr(filename, content)
-
-  zip_buffer.seek(0)
-  return send_file(
-      zip_buffer,
-      mimetype='application/zip',
-      as_attachment=True,
-      download_name=f'{dataset_name}.zip',
-  )
 
 
 if __name__ == '__main__':
