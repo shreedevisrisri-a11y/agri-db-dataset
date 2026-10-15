@@ -19,11 +19,11 @@ from flask import (
 import requests
 
 app = Flask(__name__)
-app.secret_key = 'agri_admin_secret_key_2026'
+app.secret_key = 'agri_dataset_secret_key_2026'
 
-# Admin Credentials
+# Admin Credentials (Mam Login panna Password)
 ADMIN_USERNAME = 'admin'
-ADMIN_PASSWORD = 'admin123'  # மேம் இதைப் பயன்படுத்தி Login செய்யலாம்
+ADMIN_PASSWORD = 'admin123'
 
 # Cloudinary Credentials
 cloudinary.config(
@@ -61,7 +61,9 @@ def init_db():
 init_db()
 
 
-# --- PUBLIC ROUTES ---
+# ==========================================
+# 🌐 PUBLIC WEBPAGE ROUTES
+# ==========================================
 
 
 @app.route('/')
@@ -142,7 +144,9 @@ def download_dataset(dataset_name):
   )
 
 
-# --- ADMIN AUTHENTICATION & CONTROL ROUTES ---
+# ==========================================
+# 🔐 ADMIN WEBPAGE ROUTES
+# ==========================================
 
 
 @app.route('/login', methods=['GET', 'POST'])
