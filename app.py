@@ -21,11 +21,9 @@ import requests
 app = Flask(__name__)
 app.secret_key = 'agri_dataset_secret_key_2026'
 
-# Admin Credentials (Mam Login panna Password)
 ADMIN_USERNAME = 'admin'
 ADMIN_PASSWORD = 'admin123'
 
-# Cloudinary Credentials
 cloudinary.config(
     cloud_name='xczmz3xg',
     api_key='252792712175493',
@@ -61,11 +59,7 @@ def init_db():
 init_db()
 
 
-# ==========================================
-# 🌐 PUBLIC WEBPAGE ROUTES
-# ==========================================
-
-
+# 🌐 PUBLIC SITE ROUTE (No Admin Link/Button visible)
 @app.route('/')
 def index():
   search_query = request.args.get('search', '').strip()
@@ -144,11 +138,7 @@ def download_dataset(dataset_name):
   )
 
 
-# ==========================================
-# 🔐 ADMIN WEBPAGE ROUTES
-# ==========================================
-
-
+# 🔐 ADMIN ROUTES (Accessible ONLY via direct URL /admin or /login)
 @app.route('/login', methods=['GET', 'POST'])
 def login():
   if request.method == 'POST':
