@@ -21,9 +21,11 @@ import requests
 app = Flask(__name__)
 app.secret_key = 'agri_dataset_secret_key_2026'
 
+# Admin Credentials
 ADMIN_USERNAME = 'admin'
 ADMIN_PASSWORD = 'admin123'
 
+# Cloudinary Credentials
 cloudinary.config(
     cloud_name='xczmz3xg',
     api_key='252792712175493',
@@ -59,7 +61,7 @@ def init_db():
 init_db()
 
 
-# 🌐 PUBLIC SITE ROUTE (No Admin Link/Button visible)
+# 🌐 PUBLIC SITE ROUTE
 @app.route('/')
 def index():
   search_query = request.args.get('search', '').strip()
@@ -138,7 +140,7 @@ def download_dataset(dataset_name):
   )
 
 
-# 🔐 ADMIN ROUTES (Accessible ONLY via direct URL /admin or /login)
+# 🔐 ADMIN ROUTES & SECURITY
 @app.route('/login', methods=['GET', 'POST'])
 def login():
   if request.method == 'POST':
@@ -157,27 +159,47 @@ def login():
 @app.route('/logout')
 def logout():
   session.pop('is_admin', None)
-  return redirect(url_for('index'))
+  return redirect(url_for('login'))
 
 
 @app.route('/admin')
 def admin_dashboard():
+  # Strict Protection: Session illana compulsory Login page-ku poidum
   if not session.get('is_admin'):
     return redirect(url_for('login'))
 
   conn = sqlite3.connect(DB_NAME)
   cursor = conn.cursor()
+
+  # Get Dataset summary for Admin Cards
+  cursor.execute('''
+        SELECT dataset_name, COUNT(*), MIN(image_url) 
+        FROM dataset_images 
+        GROUP BY dataset_name 
+        ORDER BY id DESC
+    ''')
+  rows = cursor.fetchall()
+
+  # Get detailed records for DB inspection table
   cursor.execute(
       'SELECT id, dataset_name, filename, image_url FROM dataset_images ORDER'
       ' BY id DESC'
   )
-  rows = cursor.fetchall()
+  db_rows = cursor.fetchall()
+
   conn.close()
 
-  db_records = [
-      {'id': r[0], 'dataset': r[1], 'filename': r[2], 'url': r[3]} for r in rows
+  datasets = [
+      {'name': row[0], 'count': row[1], 'cover_url': row[2]} for row in rows
   ]
-  return render_template('admin.html', db_records=db_records)
+  db_records = [
+      {'id': r[0], 'dataset': r[1], 'filename': r[2], 'url': r[3]}
+      for r in db_rows
+  ]
+
+  return render_template(
+      'admin.html', datasets=datasets, db_records=db_records
+  )
 
 
 @app.route('/upload', methods=['POST'])
@@ -219,6 +241,23 @@ def upload_file():
   conn.close()
 
   return jsonify({'success': True, 'count': uploaded_count})
+
+
+# 🗑️ DELETE DATASET ROUTE
+@app.route('/delete/<dataset_name>', methods=['POST'])
+def delete_dataset(dataset_name):
+  if not session.get('is_admin'):
+    return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+  conn = sqlite3.connect(DB_NAME)
+  cursor = conn.cursor()
+  cursor.execute(
+      'DELETE FROM dataset_images WHERE dataset_name = ?', (dataset_name,)
+  )
+  conn.commit()
+  conn.close()
+
+  return jsonify({'success': True})
 
 
 if __name__ == '__main__':
