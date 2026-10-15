@@ -3,17 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Webpage - Upload & Management Panel</title>
+    <title>Admin Dashboard</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; }
         .container { max-width: 1100px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #cbd5e1; padding-bottom: 15px; margin-bottom: 25px; }
-        h1 { color: #0f172a; margin: 0; }
-        .btn-logout { background: #ef4444; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: bold; }
+        h1 { color: #0f172a; margin: 0; font-size: 24px; }
+        
+        .nav-links { display: flex; align-items: center; gap: 12px; }
+        .btn-view-public { background: #0284c7; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; }
+        .btn-view-public:hover { background: #0369a1; }
+        .btn-logout { background: #ef4444; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; }
+        .btn-logout:hover { background: #dc2626; }
         
         /* Admin Dataset Upload Section */
         .upload-card { background: #f0f9ff; border: 2px dashed #0284c7; padding: 25px; border-radius: 10px; margin-bottom: 35px; }
-        .upload-card h3 { margin-top: 0; color: #0369a1; }
+        .upload-card h3 { margin-top: 0; color: #0369a1; font-size: 18px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; font-weight: bold; margin-bottom: 5px; color: #334155; }
         input[type="text"] { width: 97%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
@@ -36,16 +41,16 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>⚙️ Admin Webpage (Dataset Management)</h1>
-            <div>
-                <a href="/" target="_blank" style="margin-right: 15px; color: #0284c7; text-decoration: none; font-weight: bold;">🌐 Open Public View Page ↗</a>
+            <h1>⚙️ Admin Dashboard</h1>
+            <div class="nav-links">
+                <a href="/" class="btn-view-public">🌐 View Public Page</a>
                 <a href="/logout" class="btn-logout">Logout</a>
             </div>
         </div>
 
         <!-- ADMIN UPLOAD FORM -->
         <div class="upload-card">
-            <h3>📤 Upload New Dataset (Admin Only)</h3>
+            <h3>📤 Upload New Dataset</h3>
             <div class="form-group">
                 <label>Dataset Category Name (e.g., Tomato Leaf Disease, Chilli Dataset):</label>
                 <input type="text" id="datasetName" placeholder="Enter Dataset Title..." required>
