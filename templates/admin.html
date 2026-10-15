@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Control Panel</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 25px; }
+        h1 { color: #0f172a; margin: 0; }
+        .btn-logout { background: #ef4444; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: bold; }
+        
+        .upload-card { background: #f0f9ff; border: 2px dashed #0284c7; padding: 20px; border-radius: 10px; margin-bottom: 35px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #334155; }
+        input[type="text"] { width: 97%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
+        button { background: #0284c7; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; }
+        
+        .progress-box { display: none; background: #e0f2fe; border: 1px solid #0284c7; padding: 15px; border-radius: 8px; margin-bottom: 25px; text-align: center; }
+        .progress-bar-bg { width: 100%; background: #cbd5e1; height: 18px; border-radius: 10px; overflow: hidden; margin-top: 10px; }
+        .progress-bar-fill { height: 100%; width: 0%; background: #0284c7; transition: width 0.3s ease; }
+
+        /* Database Records Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; }
+        th { background: #f1f5f9; color: #334155; }
+        .url-link { color: #0284c7; word-break: break-all; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ Admin Dashboard & Control Panel</h1>
+            <div>
+                <a href="/" style="margin-right: 15px; color: #475569; text-decoration: none; font-weight: bold;">Public View</a>
+                <a href="/logout" class="btn-logout">Logout</a>
+            </div>
+        </div>
+
+        <!-- Admin Upload Section -->
+        <div class="upload-card">
+            <h3>📤 Upload New Dataset</h3>
+            <div class="form-group">
+                <label>Dataset Name (e.g., Tomato Leaf Disease):</label>
+                <input type="text" id="datasetName" placeholder="Enter title..." required>
+            </div>
+            <div class="form-group">
+                <label>Select Folder / Images:</label>
+                <input type="file" id="fileInput" accept="image/*" webkitdirectory multiple required>
+            </div>
+            <button type="button" onclick="uploadDataset()">Upload Dataset</button>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-box" id="progressBox">
+            <b id="statusText">Uploading images...</b>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressBar"></div>
+            </div>
+        </div>
+
+        <!-- Database Inspection Table -->
+        <h2>🗄️ SQLite Database Records (Storage URLs)</h2>
+        <p style="color: #64748b;">Below are all images stored in Cloudinary and mapped in SQLite3:</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Dataset Category</th>
+                    <th>Image Filename</th>
+                    <th>Cloudinary Storage URL</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rec in db_records %}
+                    <tr>
+                        <td>{{ rec.id }}</td>
+                        <td><b>{{ rec.dataset }}</b></td>
+                        <td>{{ rec.filename }}</td>
+                        <td><a href="{{ rec.url }}" target="_blank" class="url-link">{{ rec.url }}</a></td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #888;">No records in database.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        async function uploadDataset() {
+            const datasetName = document.getElementById("datasetName").value.trim();
+            const fileInput = document.getElementById("fileInput");
+            const files = Array.from(fileInput.files);
+
+            if (!datasetName || files.length === 0) {
+                alert("Please provide both Dataset Name and Select Folder/Files!");
+                return;
+            }
+
+            const progressBox = document.getElementById("progressBox");
+            const progressBar = document.getElementById("progressBar");
+            const statusText = document.getElementById("statusText");
+
+            progressBox.style.display = "block";
+            const batchSize = 5;
+            const totalFiles = files.length;
+            let uploadedCount = 0;
+
+            for (let i = 0; i < totalFiles; i += batchSize) {
+                const chunk = files.slice(i, i + batchSize);
+                const formData = new FormData();
+                formData.append("dataset_name", datasetName);
+                
+                chunk.forEach(file => { formData.append("file", file); });
+
+                try {
+                    statusText.innerText = `Uploading: ${uploadedCount} / ${totalFiles} completed...`;
+                    const response = await fetch('/upload', { method: 'POST', body: formData });
+                    if (response.ok) {
+                        uploadedCount += chunk.length;
+                        const percent = Math.min(100, Math.round((uploadedCount / totalFiles) * 100));
+                        progressBar.style.width = percent + "%";
+                    }
+                } catch (err) { console.error(err); }
+            }
+
+            statusText.innerText = `✅ Dataset '${datasetName}' uploaded! Reloading...`;
+            setTimeout(() => { window.location.reload(); }, 1500);
+        }
+    </script>
+</body>
+</html>
