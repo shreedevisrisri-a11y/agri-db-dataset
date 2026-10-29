@@ -32,11 +32,10 @@ cloudinary.config(
     api_secret='PbtB4lLkKg_jGq0xaQhCd8LI6fY',
 )
 
-# Step 1-ல் Copy செய்த Supabase Connection String-ஐ கீழே உள்ள 'YOUR_SUPABASE_URI_HERE' இடத்தில் Paste செய்யவும்
-# (மறக்காமல் [YOUR-PASSWORD] இடத்தில் உங்கள் பாஸ்வேர்டை மாற்றிவிடவும்)
+# Supabase PostgreSQL Connection URL (Password added successfully)
 DATABASE_URL = os.environ.get(
     'DATABASE_URL',
-    'postgresql://postgres.mnjauarahajzfractniw:YOUR_PASSWORD@aws-0-eu-west-1.pooler.supabase.com:6543/postgres',
+    'postgresql://postgres:FMFcao2XvT7Vv71o@db.mnjauarahajzfractniw.supabase.co:5432/postgres',
 )
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'}
