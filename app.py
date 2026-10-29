@@ -1,6 +1,5 @@
 import io
 import os
-import sqlite3
 import zipfile
 from concurrent.futures import ThreadPoolExecutor
 import cloudinary
@@ -16,6 +15,7 @@ from flask import (
     session,
     url_for,
 )
+import psycopg2
 import requests
 
 app = Flask(__name__)
@@ -32,7 +32,13 @@ cloudinary.config(
     api_secret='PbtB4lLkKg_jGq0xaQhCd8LI6fY',
 )
 
-DB_NAME = 'dataset.db'
+# Step 1-ல் Copy செய்த Supabase Connection String-ஐ கீழே உள்ள 'YOUR_SUPABASE_URI_HERE' இடத்தில் Paste செய்யவும்
+# (மறக்காமல் [YOUR-PASSWORD] இடத்தில் உங்கள் பாஸ்வேர்டை மாற்றிவிடவும்)
+DATABASE_URL = os.environ.get(
+    'DATABASE_URL',
+    'postgresql://postgres.mnjauarahajzfractniw:YOUR_PASSWORD@aws-0-eu-west-1.pooler.supabase.com:6543/postgres',
+)
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'}
 
 
@@ -43,18 +49,24 @@ def allowed_file(filename):
   )
 
 
+def get_db_connection():
+  conn = psycopg2.connect(DATABASE_URL)
+  return conn
+
+
 def init_db():
-  conn = sqlite3.connect(DB_NAME)
+  conn = get_db_connection()
   cursor = conn.cursor()
   cursor.execute('''
         CREATE TABLE IF NOT EXISTS dataset_images (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             dataset_name TEXT,
             filename TEXT,
             image_url TEXT
         )
     ''')
   conn.commit()
+  cursor.close()
   conn.close()
 
 
@@ -65,7 +77,7 @@ init_db()
 @app.route('/')
 def index():
   search_query = request.args.get('search', '').strip()
-  conn = sqlite3.connect(DB_NAME)
+  conn = get_db_connection()
   cursor = conn.cursor()
 
   if search_query:
@@ -73,9 +85,9 @@ def index():
         '''
             SELECT dataset_name, COUNT(*), MIN(image_url) 
             FROM dataset_images 
-            WHERE dataset_name LIKE ? 
+            WHERE dataset_name ILIKE %s 
             GROUP BY dataset_name 
-            ORDER BY id DESC
+            ORDER BY MIN(id) DESC
         ''',
         (f'%{search_query}%',),
     )
@@ -84,10 +96,11 @@ def index():
             SELECT dataset_name, COUNT(*), MIN(image_url) 
             FROM dataset_images 
             GROUP BY dataset_name 
-            ORDER BY id DESC
+            ORDER BY MIN(id) DESC
         ''')
 
   rows = cursor.fetchall()
+  cursor.close()
   conn.close()
 
   datasets = [
@@ -98,13 +111,14 @@ def index():
 
 @app.route('/download/<dataset_name>')
 def download_dataset(dataset_name):
-  conn = sqlite3.connect(DB_NAME)
+  conn = get_db_connection()
   cursor = conn.cursor()
   cursor.execute(
-      'SELECT filename, image_url FROM dataset_images WHERE dataset_name = ?',
+      'SELECT filename, image_url FROM dataset_images WHERE dataset_name = %s',
       (dataset_name,),
   )
   rows = cursor.fetchall()
+  cursor.close()
   conn.close()
 
   if not rows:
@@ -164,29 +178,26 @@ def logout():
 
 @app.route('/admin')
 def admin_dashboard():
-  # Strict Protection: Session illana compulsory Login page-ku poidum
   if not session.get('is_admin'):
     return redirect(url_for('login'))
 
-  conn = sqlite3.connect(DB_NAME)
+  conn = get_db_connection()
   cursor = conn.cursor()
 
-  # Get Dataset summary for Admin Cards
   cursor.execute('''
         SELECT dataset_name, COUNT(*), MIN(image_url) 
         FROM dataset_images 
         GROUP BY dataset_name 
-        ORDER BY id DESC
+        ORDER BY MIN(id) DESC
     ''')
   rows = cursor.fetchall()
 
-  # Get detailed records for DB inspection table
   cursor.execute(
       'SELECT id, dataset_name, filename, image_url FROM dataset_images ORDER'
       ' BY id DESC'
   )
   db_rows = cursor.fetchall()
-
+  cursor.close()
   conn.close()
 
   datasets = [
@@ -216,7 +227,7 @@ def upload_file():
         'message': 'Dataset name and files are required',
     }), 400
 
-  conn = sqlite3.connect(DB_NAME)
+  conn = get_db_connection()
   cursor = conn.cursor()
   uploaded_count = 0
 
@@ -229,7 +240,7 @@ def upload_file():
 
         cursor.execute(
             'INSERT INTO dataset_images (dataset_name, filename, image_url)'
-            ' VALUES (?, ?, ?)',
+            ' VALUES (%s, %s, %s)',
             (dataset_name, filename, image_url),
         )
         uploaded_count += 1
@@ -238,23 +249,24 @@ def upload_file():
         continue
 
   conn.commit()
+  cursor.close()
   conn.close()
 
   return jsonify({'success': True, 'count': uploaded_count})
 
 
-# 🗑️ DELETE DATASET ROUTE
 @app.route('/delete/<dataset_name>', methods=['POST'])
 def delete_dataset(dataset_name):
   if not session.get('is_admin'):
     return jsonify({'success': False, 'message': 'Unauthorized'}), 401
 
-  conn = sqlite3.connect(DB_NAME)
+  conn = get_db_connection()
   cursor = conn.cursor()
   cursor.execute(
-      'DELETE FROM dataset_images WHERE dataset_name = ?', (dataset_name,)
+      'DELETE FROM dataset_images WHERE dataset_name = %s', (dataset_name,)
   )
   conn.commit()
+  cursor.close()
   conn.close()
 
   return jsonify({'success': True})
